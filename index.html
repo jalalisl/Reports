@@ -1,879 +1,358 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pathology Commission Report | Dr. M.F. Rahman</title>
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        :root {
-            --primary: #1a3c6c;
-            --secondary: #2c6fb7;
-            --accent: #e63946;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #28a745;
-            --doctor-bg: #e3f2fd;
-            --commission-bg: #e8f5e9;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--dark);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            padding: 30px 0;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            border-radius: 10px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            position: relative;
-            overflow: hidden;
-            color: white;
-        }
-        
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, #e63946, #ff9a00);
-        }
-        
-        h1 {
-            color: white;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .doctor-name {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 30px;
-            font-weight: 600;
-            margin-top: 10px;
-            font-size: 1.1rem;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-title {
-            font-size: 1.6rem;
-            color: var(--primary);
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--secondary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .upload-area {
-            border: 3px dashed var(--secondary);
-            border-radius: 10px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(44, 111, 183, 0.05);
-            position: relative;
-        }
-        
-        .upload-area:hover {
-            background: rgba(44, 111, 183, 0.1);
-            border-color: var(--accent);
-        }
-        
-        .upload-icon {
-            font-size: 4rem;
-            color: var(--secondary);
-            margin-bottom: 15px;
-            transition: transform 0.3s ease;
-        }
-        
-        .upload-text {
-            font-size: 1.2rem;
-            color: var(--primary);
-            margin-bottom: 15px;
-            font-weight: 500;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .btn {
-            background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 14px 30px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 8px rgba(44, 111, 183, 0.3);
-        }
-        
-        .btn:hover {
-            background: var(--primary);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(26, 60, 108, 0.3);
-        }
-        
-        .btn i {
-            font-size: 1.3rem;
-        }
-        
-        .btn-accent {
-            background: var(--accent);
-            box-shadow: 0 4px 8px rgba(230, 57, 70, 0.3);
-        }
-        
-        .btn-accent:hover {
-            background: #c1121f;
-        }
-        
-        .btn-success {
-            background: var(--success);
-            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .summary-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 35px;
-        }
-        
-        .summary-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            text-align: center;
-            border-top: 5px solid var(--secondary);
-            transition: transform 0.3s ease;
-        }
-        
-        .summary-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .summary-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
-            color: var(--primary);
-        }
-        
-        .summary-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: var(--secondary);
-            text-shadow: 0 2px 3px rgba(0,0,0,0.1);
-        }
-        
-        .commission-card {
-            border-top-color: var(--accent);
-        }
-        
-        .commission-card .summary-value {
-            color: var(--accent);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 30px 0;
-            font-size: 1rem;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.05);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        thead tr {
-            background: var(--primary);
-            color: white;
-            text-align: center;
-        }
-        
-        th, td {
-            padding: 14px 16px;
-            text-align: center;
-        }
-        
-        th {
-            font-weight: 600;
-        }
-        
-        tbody tr {
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        tbody tr:nth-of-type(even) {
-            background-color: #f8f9fa;
-        }
-        
-        tbody tr:last-of-type {
-            border-bottom: 3px solid var(--primary);
-        }
-        
-        tbody tr.total-row {
-            background-color: rgba(44, 111, 183, 0.1);
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        
-        .actions {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 35px;
-            flex-wrap: wrap;
-        }
-        
-        footer {
-            text-align: center;
-            padding: 30px 0;
-            color: var(--primary);
-            font-size: 1rem;
-            margin-top: 20px;
-            font-weight: 500;
-        }
-        
-        .instructions {
-            background: rgba(255, 255, 255, 0.85);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 25px;
-            font-size: 1rem;
-            border-left: 4px solid var(--secondary);
-        }
-        
-        .instructions h3 {
-            color: var(--primary);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .instructions ul {
-            padding-left: 25px;
-            margin-bottom: 10px;
-        }
-        
-        .instructions li {
-            margin-bottom: 8px;
-            line-height: 1.6;
-        }
-        
-        .doctor-section {
-            background: var(--doctor-bg);
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-        }
-        
-        .doctor-icon {
-            font-size: 4rem;
-            color: var(--primary);
-            flex-shrink: 0;
-        }
-        
-        .doctor-info h2 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        
-        .doctor-info p {
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        .logo {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo-circle {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: bold;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-        }
-        
-        .commission-disclaimer {
-            background: var(--commission-bg);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            border-left: 4px solid var(--success);
-        }
-        
-        .commission-disclaimer h3 {
-            color: var(--success);
-            margin-bottom: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            .actions {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            th, td {
-                padding: 10px 8px;
-                font-size: 0.9rem;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .doctor-section {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KS Healthcare Commission Reports</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f9faff;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    input[type=file] {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .buttons {
+      margin: 20px 0;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 12px 18px;
+      background-color: #005bbb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+    }
+    button:disabled {
+      background-color: #7a8fa4;
+      cursor: default;
+    }
+    button:hover:not(:disabled) {
+      background-color: #004a95;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px 12px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    th {
+      background-color: #005bbb;
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    tfoot td {
+      font-weight: 700;
+      background-color: #f0f4f8;
+    }
+    .downloads {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .downloads button {
+      background-color: #2a9d8f;
+    }
+    .downloads button:hover {
+      background-color: #20806f;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <div class="logo-circle">DR</div>
-            </div>
-            <h1>Pathology Commission Report</h1>
-            <div class="doctor-name">Exclusively for Dr. M.F. Rahman</div>
-        </header>
-        
-        <div class="doctor-section">
-            <div class="doctor-icon">👨‍⚕️</div>
-            <div class="doctor-info">
-                <h2>Dr. M.F. Rahman</h2>
-                <p>This commission report is generated exclusively for Dr. M.F. Rahman based on patient referrals. The system calculates a 30% commission on the net amount for each referred patient. All reports are confidential and intended only for Dr. Rahman's records.</p>
-            </div>
-        </div>
-        
-        <div class="commission-disclaimer">
-            <h3>30% Commission Policy</h3>
-            <p>All commission calculations are based on the established 30% referral agreement with Dr. M.F. Rahman. This report includes only patients referred by Dr. Rahman.</p>
-        </div>
-        
-        <main>
-            <div class="card">
-                <h2 class="card-title">📤 Upload Patient Data</h2>
-                <div class="upload-area" id="drop-area">
-                    <div class="upload-icon">📊</div>
-                    <div class="upload-text">Drag & Drop your Excel file here</div>
-                    <div>OR</div>
-                    <button class="btn" id="browse-btn">
-                        📁 Browse Files
-                    </button>
-                    <input type="file" id="file-input" class="file-input" accept=".xlsx, .xls">
-                </div>
-                
-                <div class="instructions">
-                    <h3>ℹ️ Instructions:</h3>
-                    <ul>
-                        <li>Upload an Excel file (.xlsx or .xls) with the following columns: <strong>Sr.No., Date, Patient Name, Test Performed, Net, Remark</strong></li>
-                        <li>The application will automatically calculate 30% commission for each patient referred by Dr. M.F. Rahman</li>
-                        <li>Download the commission report as Excel or PDF using the buttons below</li>
-                        <li>All data processing happens in your browser - no data is sent to any server</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div id="report-section" class="hidden">
-                <div class="summary-cards">
-                    <div class="summary-card">
-                        <h3>Total Patients</h3>
-                        <div class="summary-value" id="total-patients">0</div>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Total Net Amount</h3>
-                        <div class="summary-value" id="total-net">₹0.00</div>
-                    </div>
-                    <div class="summary-card commission-card">
-                        <h3>Commission (30%)</h3>
-                        <div class="summary-value" id="commission">₹0.00</div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h2 class="card-title">📋 Commission Report for Dr. M.F. Rahman</h2>
-                    <div id="table-container"></div>
-                    
-                    <div class="actions">
-                        <button id="download-excel" class="btn">
-                            📊 Download Excel Report
-                        </button>
-                        <button id="download-pdf" class="btn btn-accent">
-                            📄 Download PDF Report
-                        </button>
-                        <button id="new-report" class="btn btn-success">
-                            🔄 New Report
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </main>
-        
-        <footer>
-            <p>Exclusive Pathology Report Generator for Dr. M.F. Rahman</p>
-            <p>© 2023 | All rights reserved</p>
-        </footer>
-    </div>
+  <h1>KS Healthcare Commission Reports</h1>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
 
-    <script>
-        // Global variables
+  <div class="buttons">
+    <button id="reportRahman" disabled>Generate Dr. M.F. Rahman Report</button>
+    <button id="reportAkhter" disabled>Generate Dr. Md. Akhter Reza Report</button>
+    <button id="reportDebashish" disabled>Generate Dr. DEBASHISH CHAKRABORTY Report</button>
+  </div>
+
+  <div id="reportArea"></div>
+
+  <div class="downloads" id="downloadArea" style="display:none;">
+    <button id="downloadExcel">Download Excel</button>
+    <button id="downloadPDF">Download PDF</button>
+  </div>
+
+  <!-- SheetJS to read and write Excel files -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF to create PDF files -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.25/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    (function () {
+      const fileInput = document.getElementById('fileInput');
+      const btnRahman = document.getElementById('reportRahman');
+      const btnAkhter = document.getElementById('reportAkhter');
+      const btnDebashish = document.getElementById('reportDebashish');
+      const reportArea = document.getElementById('reportArea');
+      const downloadArea = document.getElementById('downloadArea');
+      const downloadExcelBtn = document.getElementById('downloadExcel');
+      const downloadPDFBtn = document.getElementById('downloadPDF');
+
+      let rawData = null;
+      let fileName = '';
+      let currentReportData = null;
+      let currentReportTitle = '';
+
+      // Function to read Excel and load data
+      function handleFile(e) {
+        const f = e.target.files[0];
+        if (!f) return resetApp();
+
+        fileName = f.name;
+
+        const reader = new FileReader();
+
+        reader.onload = function (evt) {
+          const data = evt.target.result;
+          // Read Excel workbook
+          const workbook = XLSX.read(data, { type: 'binary' });
+
+          // Assuming first sheet has the data
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          // Convert to JSON with raw values
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+          // Basic validation of columns
+          if (!jsonData.length) {
+            alert('Uploaded Excel file is empty.');
+            resetApp();
+            return;
+          }
+          const firstRow = jsonData[0];
+          const requiredCols = [
+            "Sr.No.",
+            "Date",
+            "Corporate",
+            "Patient Name",
+            "Test Performed",
+            "Ref.Dr",
+            "Net"
+          ];
+          for (const col of requiredCols) {
+            if (!(col in firstRow)) {
+              alert(`Missing required column "${col}" in Excel file.`);
+              resetApp();
+              return;
+            }
+          }
+
+          // Save data globally
+          rawData = jsonData;
+
+          // Enable buttons
+          btnRahman.disabled = false;
+          btnAkhter.disabled = false;
+          btnDebashish.disabled = false;
+
+          // Clear previous report
+          reportArea.innerHTML = '';
+          downloadArea.style.display = 'none';
+        };
+
+        reader.readAsBinaryString(f);
+      }
+
+      fileInput.addEventListener('change', handleFile);
+
+      // Utility: round numbers
+      function roundAmount(val) {
+        return Math.round(Number(val) || 0);
+      }
+
+      // Build Table HTML given an array of objects and columns
+      function buildTable(data, columns) {
+        let html = '<table><thead><tr>';
+        for (const col of columns) {
+          html += `<th>${col}</th>`;
+        }
+        html += '</tr></thead><tbody>';
+        data.forEach(row => {
+          html += '<tr>';
+          for (const col of columns) {
+            html += `<td>${row[col]}</td>`;
+          }
+          html += '</tr>';
+        });
+        html += '</tbody><tfoot><tr>';
+        for(let i = 0; i < columns.length - 1; i++) {
+          html += '<td></td>';
+        }
+        html += `<td><strong>${data.length > 0 ? data[data.length - 1][columns[columns.length-1]] : ''}</strong></td>`;
+        html += '</tr></tfoot></table>';
+        return html;
+      }
+
+      // Generate report data for given doctor with commission rate and amount calculation
+      function generateReport(refDrName, commissionFn) {
+        if (!rawData) {
+          alert('Please upload a valid Excel file first.');
+          return;
+        }
+
+        // Filter data by Ref.Dr
+        let filtered = rawData.filter(r => r['Ref.Dr'].toString().trim().toUpperCase() === refDrName.toUpperCase());
+        if (!filtered.length) {
+          alert(`No records found for ${refDrName}`);
+          reportArea.innerHTML = '';
+          downloadArea.style.display = 'none';
+          return;
+        }
+
+        // Prepare data for report
         let reportData = [];
-        let totalNet = 0;
-        let commission = 0;
-        
-        // DOM elements
-        const dropArea = document.getElementById('drop-area');
-        const fileInput = document.getElementById('file-input');
-        const browseBtn = document.getElementById('browse-btn');
-        const reportSection = document.getElementById('report-section');
-        const totalPatientsEl = document.getElementById('total-patients');
-        const totalNetEl = document.getElementById('total-net');
-        const commissionEl = document.getElementById('commission');
-        const tableContainer = document.getElementById('table-container');
-        const downloadExcelBtn = document.getElementById('download-excel');
-        const downloadPdfBtn = document.getElementById('download-pdf');
-        const newReportBtn = document.getElementById('new-report');
-        
-        // Event listeners
-        browseBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFileSelect);
-        downloadExcelBtn.addEventListener('click', downloadExcelReport);
-        downloadPdfBtn.addEventListener('click', downloadPdfReport);
-        newReportBtn.addEventListener('click', resetApp);
-        
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
+        let totalAmount = 0;
+
+        for(let i = 0; i < filtered.length; i++) {
+          let r = filtered[i];
+          const netVal = Number(r['Net']) || 0;
+          let amount = commissionFn(netVal);
+          amount = roundAmount(amount);
+          totalAmount += amount;
+
+          reportData.push({
+            "Sr.No.": r["Sr.No."],
+            "Date": r["Date"],
+            "Patient Name": r["Patient Name"],
+            "Test Performed": r["Test Performed"],
+            "Amount": amount
+          });
+        }
+        totalAmount = roundAmount(totalAmount);
+
+        // Add total row at the end (Amount column)
+        reportData.push({
+          "Sr.No.": '',
+          "Date": '',
+          "Patient Name": '',
+          "Test Performed": 'Total',
+          "Amount": totalAmount
         });
-        
-        // Highlight drop area when item is dragged over it
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => {
-                dropArea.style.borderColor = '#e63946';
-                dropArea.style.backgroundColor = 'rgba(230, 57, 70, 0.1)';
-            }, false);
+
+        currentReportData = reportData;
+        currentReportTitle = `KS Healthcare report - ${fileName.replace(/\.[^/.]+$/, '')}`;
+
+        // Render table
+        const columns = ["Sr.No.", "Date", "Patient Name", "Test Performed", "Amount"];
+        reportArea.innerHTML = buildTable(reportData, columns);
+        downloadArea.style.display = 'flex';
+      }
+
+      // Button handlers with respective commissions
+      btnRahman.addEventListener('click', () => {
+        generateReport('Dr. M.F. Rahman', net => net * 0.30);
+      });
+
+      btnAkhter.addEventListener('click', () => {
+        generateReport('Dr. Md. Akhter Reza', net => net);
+      });
+
+      btnDebashish.addEventListener('click', () => {
+        generateReport('Dr. DEBASHISH CHAKRABORTY', net => net * 0.35);
+      });
+
+      // Download Excel
+      downloadExcelBtn.addEventListener('click', () => {
+        if (!currentReportData) return;
+
+        const wb = XLSX.utils.book_new();
+        const wsData = [];
+
+        // Prepare header row
+        const header = Object.keys(currentReportData[0]);
+        wsData.push(header);
+
+        // Prepare data rows
+        for (const row of currentReportData) {
+          wsData.push(header.map(h => row[h]));
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Report');
+
+        XLSX.writeFile(wb, `${currentReportTitle}.xlsx`);
+      });
+
+      // Download PDF
+      downloadPDFBtn.addEventListener('click', () => {
+        if (!currentReportData) return;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.text(currentReportTitle, 14, 20);
+
+        // Prepare data for AutoTable
+        const columns = Object.keys(currentReportData[0]).map(h => ({ header: h, dataKey: h }));
+
+        // Remove 'Commission Rate' and 'Generated' if they appear in data - per requirement, but they do not appear in report, so no extra cleaning needed.
+
+        // AutoTable consumes array of objects and columns with keys
+
+        // Start table below title
+        doc.autoTable({
+          startY: 28,
+          head: [columns.map(c => c.header)],
+          body: currentReportData.map(row => columns.map(c => row[c.dataKey])),
+          styles: { halign: 'center' },
+          headStyles: { fillColor: [0, 91, 187], textColor: 255, fontStyle: 'bold' },
+          footStyles: { fillColor: [224, 244, 248], fontStyle: 'bold' },
+          didDrawPage: function (data) {
+            // Optionally can add footer or page numbers if needed
+          }
         });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => {
-                dropArea.style.borderColor = '#2c6fb7';
-                dropArea.style.backgroundColor = 'rgba(44, 111, 183, 0.05)';
-            }, false);
-        });
-        
-        // Handle dropped files
-        dropArea.addEventListener('drop', handleDrop, false);
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            fileInput.files = files;
-            handleFileSelect();
-        }
-        
-        function handleFileSelect() {
-            const file = fileInput.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    // Get first sheet
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    
-                    // Convert to JSON
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                    
-                    if (jsonData.length === 0) {
-                        alert('The uploaded file is empty or not in the correct format.');
-                        return;
-                    }
-                    
-                    // Process data
-                    processExcelData(jsonData);
-                    
-                } catch (error) {
-                    alert('Error processing file: ' + error.message);
-                    console.error(error);
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-        
-        function processExcelData(data) {
-            reportData = [];
-            totalNet = 0;
-            commission = 0;
-            
-            // Process each row
-            data.forEach((row, index) => {
-                // Skip rows without valid data
-                if (!row['Patient Name'] || !row['Net']) return;
-                
-                // Create report row
-                const reportRow = {
-                    srNo: row['Sr.No.'] || index + 1,
-                    date: formatDate(row['Date']),
-                    patientName: row['Patient Name'],
-                    testPerformed: row['Test Performed'] || 'N/A',
-                    net: parseFloat(row['Net']),
-                    commissionAmount: parseFloat(row['Net']) * 0.3,
-                    remark: row['Remark'] || ''
-                };
-                
-                reportData.push(reportRow);
-                totalNet += reportRow.net;
-                commission += reportRow.commissionAmount;
-            });
-            
-            // Update UI
-            updateUI();
-        }
-        
-        function formatDate(dateValue) {
-            if (!dateValue) return 'N/A';
-            
-            // If it's a valid date string or timestamp
-            if (typeof dateValue === 'string' || typeof dateValue === 'number') {
-                const date = new Date(dateValue);
-                if (!isNaN(date)) {
-                    return date.toLocaleDateString('en-IN');
-                }
-            }
-            
-            // If it's a date object
-            if (dateValue instanceof Date) {
-                return dateValue.toLocaleDateString('en-IN');
-            }
-            
-            return 'N/A';
-        }
-        
-        function updateUI() {
-            // Update summary cards
-            totalPatientsEl.textContent = reportData.length;
-            totalNetEl.textContent = `₹${totalNet.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
-            commissionEl.textContent = `₹${commission.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
-            
-            // Generate table
-            generateTable();
-            
-            // Show report section
-            reportSection.classList.remove('hidden');
-            
-            // Scroll to report
-            reportSection.scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        function generateTable() {
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Sr.No.</th>
-                            <th>Date</th>
-                            <th>Patient Name</th>
-                            <th>Test Performed</th>
-                            <th>Net Amount</th>
-                            <th>Commission (30%)</th>
-                            <th>Remark</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            // Add data rows
-            reportData.forEach(row => {
-                tableHTML += `
-                    <tr>
-                        <td>${row.srNo}</td>
-                        <td>${row.date}</td>
-                        <td>${row.patientName}</td>
-                        <td>${row.testPerformed}</td>
-                        <td>₹${row.net.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                        <td>₹${row.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                        <td>${row.remark}</td>
-                    </tr>
-                `;
-            });
-            
-            // Add total row
-            tableHTML += `
-                <tr class="total-row">
-                    <td colspan="4" style="text-align: right;">Total:</td>
-                    <td>₹${totalNet.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                    <td>₹${commission.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                    <td></td>
-                </tr>
-            `;
-            
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            
-            tableContainer.innerHTML = tableHTML;
-        }
-        
-        function downloadExcelReport() {
-            // Create a new workbook
-            const wb = XLSX.utils.book_new();
-            
-            // Prepare data for Excel
-            const excelData = [
-                ['Commission Report for Dr. M.F. Rahman'],
-                [`Generated on: ${new Date().toLocaleString()}`],
-                [],
-                ['Sr.No.', 'Date', 'Patient Name', 'Test Performed', 'Net Amount', 'Commission (30%)', 'Remark']
-            ];
-            
-            // Add data rows
-            reportData.forEach(row => {
-                excelData.push([
-                    row.srNo,
-                    row.date,
-                    row.patientName,
-                    row.testPerformed,
-                    row.net,
-                    row.commissionAmount,
-                    row.remark
-                ]);
-            });
-            
-            // Add empty row
-            excelData.push([]);
-            
-            // Add total row
-            excelData.push([
-                '', '', '', 'Total:',
-                totalNet,
-                commission,
-                ''
-            ]);
-            
-            // Create worksheet
-            const ws = XLSX.utils.aoa_to_sheet(excelData);
-            
-            // Merge title cells
-            if (!ws['!merges']) ws['!merges'] = [];
-            ws['!merges'].push({s: {r:0, c:0}, e: {r:0, c:6}});
-            ws['!merges'].push({s: {r:1, c:0}, e: {r:1, c:6}});
-            
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Commission Report');
-            
-            // Save Excel file
-            XLSX.writeFile(wb, `Dr_Rahman_Commission_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
-        }
-        
-        function downloadPdfReport() {
-            // Initialize jsPDF
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
-            
-            // Add header
-            doc.setFillColor(26, 60, 108);
-            doc.rect(0, 0, 210, 30, 'F');
-            
-            doc.setFontSize(20);
-            doc.setTextColor(255, 255, 255);
-            doc.text('Dr. M.F. Rahman', 105, 15, null, null, 'center');
-            doc.setFontSize(14);
-            doc.text('Commission Report', 105, 23, null, null, 'center');
-            
-            // Add logo
-            doc.setFillColor(44, 111, 183);
-            doc.circle(25, 15, 10, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(16);
-            doc.text('DR', 25, 18, null, null, 'center');
-            
-            // Add date
-            doc.setFontSize(10);
-            doc.setTextColor(200, 200, 200);
-            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 190, 27, null, null, 'right');
-            
-            // Add summary information
-            doc.setFontSize(12);
-            doc.setTextColor(0, 0, 0);
-            doc.setFont(undefined, 'bold');
-            doc.text('Report Summary:', 20, 45);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Total Patients: ${reportData.length}`, 20, 55);
-            doc.text(`Total Net Amount: ₹${totalNet.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 20, 62);
-            doc.text(`Total Commission: ₹${commission.toLocaleString('en-IN', {minimumFractionDigits: 2})}`, 20, 69);
-            
-            // Prepare data for table
-            const tableData = reportData.map(row => [
-                row.srNo,
-                row.date,
-                row.patientName,
-                row.testPerformed,
-                `₹${row.net.toLocaleString('en-IN', {minimumFractionDigits: 2})}`,
-                `₹${row.commissionAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`,
-                row.remark
-            ]);
-            
-            // Add total row
-            tableData.push([
-                '', '', '', 'Total:',
-                `₹${totalNet.toLocaleString('en-IN', {minimumFractionDigits: 2})}`,
-                `₹${commission.toLocaleString('en-IN', {minimumFractionDigits: 2})}`,
-                ''
-            ]);
-            
-            // AutoTable settings
-            doc.autoTable({
-                head: [['Sr.No.', 'Date', 'Patient Name', 'Test Performed', 'Net Amount', 'Commission (30%)', 'Remark']],
-                body: tableData,
-                startY: 75,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [26, 60, 108],
-                    textColor: 255,
-                    fontSize: 10,
-                    fontStyle: 'bold'
-                },
-                bodyStyles: {
-                    fontSize: 9
-                },
-                alternateRowStyles: {
-                    fillColor: [240, 240, 240]
-                },
-                styles: {
-                    cellPadding: 4,
-                    fontSize: 9,
-                    valign: 'middle'
-                },
-                didDrawCell: function(data) {
-                    // Style total row
-                    if (data.row.index === reportData.length) {
-                        doc.setFillColor(44, 111, 183, 15);
-                        doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
-                        doc.setTextColor(26, 60, 108);
-                        doc.setFont(undefined, 'bold');
-                    }
-                }
-            });
-            
-            // Add footer
-            const pageCount = doc.internal.getNumberOfPages();
-            for(let i = 1; i <= pageCount; i++) {
-                doc.setPage(i);
-                doc.setFontSize(8);
-                doc.setTextColor(100);
-                doc.text(`Page ${i} of ${pageCount}`, 195, 287, null, null, 'right');
-                doc.text('Confidential - For Dr. M.F. Rahman only', 15, 287);
-            }
-            
-            // Save PDF
-            doc.save(`Dr_Rahman_Commission_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
-        }
-        
-        function resetApp() {
-            // Reset file input
-            fileInput.value = '';
-            
-            // Hide report section
-            reportSection.classList.add('hidden');
-            
-            // Reset data
-            reportData = [];
-            totalNet = 0;
-            commission = 0;
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    </script>
+
+        doc.save(`${currentReportTitle}.pdf`);
+      });
+
+      // Reset app on invalid
+      function resetApp() {
+        rawData = null;
+        fileName = '';
+        currentReportData = null;
+        currentReportTitle = '';
+
+        btnRahman.disabled = true;
+        btnAkhter.disabled = true;
+        btnDebashish.disabled = true;
+        reportArea.innerHTML = '';
+        downloadArea.style.display = 'none';
+      }
+    })();
+  </script>
 </body>
 </html>
