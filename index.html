@@ -18,8 +18,8 @@
       margin-bottom: 1rem;
     }
     input[type=file] {
-      display: block;
-      margin-bottom: 1rem;
+     display: block;
+     margin: 0 auto 1rem auto;
     }
     .buttons {
       margin: 20px 0;
@@ -194,27 +194,39 @@
 
       // Build Table HTML given an array of objects and columns
       function buildTable(data, columns) {
-        let html = '<table><thead><tr>';
-        for (const col of columns) {
-          html += `<th>${col}</th>`;
-        }
-        html += '</tr></thead><tbody>';
-        data.forEach(row => {
-          html += '<tr>';
-          for (const col of columns) {
-            html += `<td>${row[col]}</td>`;
-          }
-          html += '</tr>';
-        });
-        html += '</tbody><tfoot><tr>';
-        for(let i = 0; i < columns.length - 1; i++) {
-          html += '<td></td>';
-        }
-        html += `<td><strong>${data.length > 0 ? data[data.length - 1][columns[columns.length-1]] : ''}</strong></td>`;
-        html += '</tr></tfoot></table>';
-        return html;
-      }
+  	let html = '<table><thead><tr>';
+ 	for (const col of columns) {
+     	  html += `<th>${col}</th>`;
+ 	}
+ 	html += '</tr></thead><tbody>';
+ 	data.forEach(row => {
+         html += '<tr>';
+   	 for (const col of columns) {
+     	   html += `<td>${row[col]}</td>`;
+   	 }
+  	 html += '</tr>';
+ 	});
+  	html += '</tbody><tfoot><tr>';
 
+ 	for(let i = 0; i < columns.length; i++) {
+  	  let cellContent = '';
+  	  if(data.length > 0) {
+   	     const val = data[data.length - 1][columns[i]];
+    	    if(i === columns.length - 2) {  // "Test Performed" column where 'Total' label sits
+      	    	cellContent = `<strong>${val}</strong>`;
+     	    } else if(i === columns.length - 1) { // "Amount" column with total amount
+       	      cellContent = `<strong>${val}</strong>`;
+            } else {
+      	     cellContent = '<strong></strong>';
+    	   }
+      	 }
+   	 html += `<td style="font-weight:700; background-color:#f0f4f8;">${cellContent}</td>`;
+ 	 }
+
+  	html += '</tr></tfoot></table>';
+
+ 	 return html;  // <-- Return the built HTML string
+      }
       // Generate report data for given doctor with commission rate and amount calculation
       function generateReport(refDrName, commissionFn) {
         if (!rawData) {
@@ -243,7 +255,7 @@
           totalAmount += amount;
 
           reportData.push({
-            "Sr.No.": r["Sr.No."],
+            "Sr.No.": i + 1,  // Sequential numbering
             "Date": r["Date"],
             "Patient Name": r["Patient Name"],
             "Test Performed": r["Test Performed"],
